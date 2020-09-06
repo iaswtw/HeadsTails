@@ -1,9 +1,9 @@
 #include <iostream>
 #include <stdlib.h>
+#include <time.h>
 
-void print_progres(int trial_i, long long total_trials)
+void print_progres(long long trial_i, long long total_trials)
 {
-    // todo - print progress
     const int progress_increment = total_trials / 100;
     if ((trial_i % progress_increment) == 0)
     {
@@ -16,38 +16,40 @@ void print_progres(int trial_i, long long total_trials)
 int main()
 {
     const int num_consecutive_heads = 27;
-    long long num_trials                = 1 << 27;
+    long long num_trials            = 1LL << 28;
 
     printf("Trying %lld times\n\n", num_trials);
 
     const int hist_N = num_consecutive_heads;
     int hist[hist_N] = { 0, };
     int hist_i = 0;
-    int hist_start = 0;
-    long long trial_i;
-    long long j;
     int num_consecutive_heads_found = 0;
 
-    srand(0);
+    // select either a constant seed or one based on current time.
+    unsigned long seed = 0;
+    //unsigned long seed = time(NULL);
 
-    for (trial_i = 0; trial_i < num_trials; trial_i++)
+    printf("Using seed %lu\n\n", seed);
+    srand(seed);
+
+    for (long long trial_i = 0; trial_i < num_trials; trial_i++)
     {
         double r = double(rand()) / double(RAND_MAX);
 
-        // <0.5 are heads
+        // classify random number into heads/tails. write to the oldest value in history buffer.
+        // <  0.5 are heads
         // >= 0.5 are tails
-        if (r < 0.5)
-            hist[hist_i] = 0;
-        else
-            hist[hist_i] = 1;
+        hist[hist_i] = (r < 0.5) ? 0 : 1;
 
+        // Advance index into history buffer
         hist_i = (hist_i + 1) % hist_N;
 
         print_progres(trial_i, num_trials);
 
         if (trial_i >= hist_N)
         {
-            // assume all heads
+            // check if the entire history buffer has heads.
+            // initially, assume all heads.
             bool all_heads = true;
             for (int k = 0; k < hist_N; k++)
             {
@@ -60,7 +62,6 @@ int main()
 
             if (all_heads)
             {
-                //print_progres(trial_i, num_trials);
                 printf("\rFound %d consecutive heads at %lld\n", hist_N, trial_i);
                 num_consecutive_heads_found++;
             }
